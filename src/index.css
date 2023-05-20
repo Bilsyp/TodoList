@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .btn {
+    @apply w-44  px-10 py-2  flex justify-center items-center gap-x-5  active:bg-violet-200 rounded-xl bg-violet-700 text-white font-semibold;
+  }
+  .txt {
+    @apply text-3xl text-white;
+  }
+  .check {
+    @apply bg-emerald-700;
+  }
+}
 @layer base {
   body {
     @apply bg-slate-800;

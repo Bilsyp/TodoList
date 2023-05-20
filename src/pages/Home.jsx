@@ -1,69 +1,80 @@
-import React, { useDebugValue, useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Todo from "../components/Todo";
 import { FaCloud } from "react-icons/fa";
 import useLocalStorage from "use-local-storage";
+import Check from "./Check";
+import { updateItemChecked } from "../components/utils";
 const Home = () => {
+  const btn = useRef(null);
   const [message, setMessage] = useState("");
   const [store, setStore] = useLocalStorage("list", []);
   const [todo, setTodo] = useState(store);
+  const [selected, setSelected] = useState({
+    all: true,
+    done: false,
+  });
   const [check, setCheck] = useState(false);
 
   const handleSubmit = () => {
     const id = Math.random().toString(36).substring(7);
+    const currentDate = new Date();
+    const time = `${currentDate.getHours()}:${currentDate.getMinutes()}:${currentDate.getSeconds()} ${currentDate.getMilliseconds()} ${
+      currentDate.getHours() >= 12 ? "PM" : "AM"
+    }`;
 
     setTodo((prev) => {
       return [
         ...prev,
         {
           message,
-          date: `${new Date().toDateString()}`,
+          date: `${new Date().toDateString()} ${time}`,
           id,
-          check,
+          checked: false,
         },
       ];
     });
   };
   useEffect(() => {
     setStore(todo);
+    // console.log();
   }, [todo]);
 
   const handleChange = (e) => {
     setMessage(e.target.value);
   };
-  const handleCheck = (id) => {
-    setCheck(!check);
-    const previousArray = [...todo];
-    const updateItemChecked = (array, id, checked) => {
-      const updatedArray = array.map((item) => {
-        const previousItem = previousArray.find(
-          (prevItem) => prevItem.id === item.id
-        );
-        if (item.id === id) {
-          return {
-            ...previousItem, // Meng-overwrite item dengan nilai dari array sebelumnya
-            check: !check, // Meng-overwrite kunci 'checked' dengan nilai baru
-          };
-        }
-        return item; // Mempertahankan item yang tidak berubah
-      });
-      return updatedArray;
-    };
-    const newArr = updateItemChecked(todo, id, check);
-
-    setStore(newArr);
-  };
 
   const removeItem = (id) => {
     const pos = todo.indexOf(id);
-    // setStore(updateArray);
-    console.log(pos);
     if (pos == -1) {
-      // const updateArray = todo.filter((item, index) => index !== pos);
-      setStore((prev) => prev.filter((crr, index) => crr.id !== id));
+      setTodo((prev) => prev.filter((crr, index) => crr.id !== id));
     }
-    // setTodo(updateArray);
   };
+  const handleCheck = (todos) => {
+    setCheck((prevCheck) => !prevCheck);
 
+    setTimeout(() => {
+      const newArr = updateItemChecked(store, todos.id, !check);
+      setTodo(newArr);
+    }, 500);
+  };
+  const handleDone = () => {
+    setSelected((prev) => {
+      return {
+        ...prev,
+        done: true,
+        all: false,
+      };
+    });
+  };
+  const handleAll = () => {
+    setSelected((prev) => {
+      return {
+        ...prev,
+        done: false,
+        all: true,
+      };
+    });
+  };
   return (
     <div className="flex justify-center mt-16 items-center flex-col gap-10 p-8">
       <input
@@ -76,20 +87,40 @@ const Home = () => {
       >
         Send <FaCloud />
       </button>
-      <div className="flex flexp-col justify-center w-full gap-10 items-center flex-col-reverse">
-        {todo == null ? (
-          ""
-        ) : todo == undefined ? (
-          <h1>Hhaahah</h1>
-        ) : (
-          todo.map((res) => (
-            <Todo
-              remove={{ removeItem, setStore, handleCheck, check }}
-              key={res.id}
-              todo={res}
-            />
-          ))
-        )}
+      <div className="flex  justify-center w-full gap-10 items-center">
+        <button onClick={handleAll} className="btn">
+          All
+        </button>
+        <button onClick={handleDone} ref={btn} className="btn ">
+          Check List
+        </button>
+      </div>
+      <div className="flex justify-center items-center  flex-col-reverse gap-10 w-full">
+        {selected.all
+          ? todo.map((res) => {
+              return (
+                <div key={res.id} className="w-full mx-auto">
+                  <Todo
+                    todo={res}
+                    func={{ setStore, removeItem, handleCheck }}
+                  />
+                </div>
+              );
+            })
+          : null}
+
+        {selected.done
+          ? store.map((res) => {
+              if (res.checked) {
+                return (
+                  <div key={res.id} className="w-full mx-auto">
+                    <Check todo={res} />
+                  </div>
+                );
+              }
+              // return "";
+            })
+          : null}
       </div>
     </div>
   );
